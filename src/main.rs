@@ -5,6 +5,7 @@ use log::{self, error, LevelFilter};
 use serde_derive::{Deserialize, Serialize};
 use simple_error::bail;
 use simple_logger::SimpleLogger;
+use std::fs;
 
 #[derive(Deserialize)]
 struct CustomEvent {
@@ -31,7 +32,10 @@ fn my_handler(e: CustomEvent, c: Context) -> Result<CustomOutput, HandlerError> 
         bail!("Empty first name");
     }
 
+    let contents = fs::read_to_string("/cenas")
+        .expect("Something went wrong reading the file");
+
     Ok(CustomOutput {
-        message: format!("Hello, {}!", e.first_name),
+        message: format!("Hello, {}! {}", e.first_name, contents),
     })
 }
