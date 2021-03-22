@@ -1,4 +1,4 @@
-use std::error::Error;
+// use std::error::Error;
 
 use lambda_runtime::{error::HandlerError, lambda, Context};
 use log::{self, error, LevelFilter};
@@ -18,12 +18,13 @@ struct CustomOutput {
     message: String,
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
-    SimpleLogger::new().with_level(LevelFilter::Info).init().unwrap();
+fn main() -> () {
+    SimpleLogger::new()
+        .with_level(LevelFilter::Info)
+        .init()
+        .unwrap();
 
     lambda!(my_handler);
-
-    Ok(())
 }
 
 fn my_handler(e: CustomEvent, c: Context) -> Result<CustomOutput, HandlerError> {
@@ -32,8 +33,7 @@ fn my_handler(e: CustomEvent, c: Context) -> Result<CustomOutput, HandlerError> 
         bail!("Empty first name");
     }
 
-    let contents = fs::read_to_string("/cenas")
-        .expect("Something went wrong reading the file");
+    let contents = fs::read_to_string("/cenas").expect("Something went wrong reading the file");
 
     Ok(CustomOutput {
         message: format!("Hello, {}! {}", e.first_name, contents),
