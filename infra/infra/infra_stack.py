@@ -12,11 +12,9 @@ class InfraStack(cdk.Stack):
     def __init__(self, scope: cdk.Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        repository_name = "rust_lambda"
-
         ecr_image = aws_lambda.EcrImageCode.from_asset_image(
             directory=os.path.join(os.getcwd(), "../docker"),
-            repository_name=repository_name)
+            repository_name="rust_lambda")
 
         handler = aws_lambda.Function(self,
                                       id="rust_lambda_chapter_2",
@@ -35,6 +33,16 @@ class InfraStack(cdk.Stack):
                                      description="This fronts the rust lambda guessing game.")
 
         game_integration = aws_apigateway.LambdaIntegration(handler,
-                                                            request_templates={"application/json": '{ "statusCode": "200" }'})
+                                                            proxy=False,
+                                                            integration_responses=[
+                                                                aws_apigateway.IntegrationResponse(
+                                                                    status_code="200"
+                                                                )
+                                                            ],
+                                                            request_templates={"application/json": "{\"firstName\": \"$input.params(\'firstName\')\"}"})
 
-        api.root.add_method("GET", game_integration)
+        api.root.add_method("GET",
+                            game_integration,
+                            method_responses=[aws_apigateway.MethodResponse(
+                                status_code="200"
+                            )])
