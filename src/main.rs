@@ -36,6 +36,6 @@ fn my_handler(e: CustomEvent, c: Context) -> Result<CustomOutput, HandlerError> 
     let contents = fs::read_to_string("/cenas").expect("Something went wrong reading the file");
 
     Ok(CustomOutput {
-        message: format!("Hello, {}! {}", e.first_name, contents),
+        message: format!("Hello, {}! {}!", e.first_name, contents),
     })
 }
