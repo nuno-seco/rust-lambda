@@ -1,4 +1,4 @@
-/target
+target
 .DS_Store
 response.json
 *.swp
@@ -8,7 +8,8 @@ __pycache__
 .env
 .venv
 *.egg-info
-
+docker/bootstrap
+.vscode/.ropeproject/objectdb
 # CDK asset staging directory
 .cdk.staging
 cdk.out

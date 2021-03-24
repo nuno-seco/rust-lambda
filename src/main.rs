@@ -1,6 +1,6 @@
 use lambda_runtime::{error::HandlerError, lambda, Context};
 use log::{self, LevelFilter};
-use rust_lambda_chapter_2::events::{ActorEvent, GameEvent, Session};
+use rust_lambda_chapter_2::events::{ActorEvent, Game, GameEvent};
 use simple_logger::SimpleLogger;
 use uuid::Uuid;
 
@@ -11,19 +11,20 @@ fn main() -> () {
         .unwrap();
 
     lambda!(router);
+    // lambda!(|event, context| { router(event, context) })
 }
 
 fn router(event: ActorEvent, _: Context) -> Result<GameEvent, HandlerError> {
     let result = match &event {
-        ActorEvent::SessionInfoRequested { id } => GameEvent::SessionInfoProvided(Session {
+        ActorEvent::GameInfoRequested { id } => GameEvent::GameInfoProvided(Game {
             id: *id,
             guesses: [None, None, None],
         }),
-        ActorEvent::GuessSubmitted { id, guess } => GameEvent::GuessEvaluated(Session {
+        ActorEvent::GuessSubmitted { id, guess } => GameEvent::GuessEvaluated(Game {
             id: *id,
             guesses: [Some(*guess), None, None],
         }),
-        ActorEvent::SessionRequested => GameEvent::SessionCreated(Session {
+        ActorEvent::GameRequested => GameEvent::GameCreated(Game {
             id: Uuid::new_v4(),
             guesses: [None, None, None],
         }),
