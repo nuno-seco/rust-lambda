@@ -1,22 +1,8 @@
-// use std::error::Error;
-
 use lambda_runtime::{error::HandlerError, lambda, Context};
-use log::{self, error, LevelFilter};
-use serde_derive::{Deserialize, Serialize};
-use simple_error::bail;
+use log::{self, LevelFilter};
+use rust_lambda_chapter_2::events::{ActorEvent, GameEvent, Session};
 use simple_logger::SimpleLogger;
-use std::fs;
-
-#[derive(Deserialize)]
-struct CustomEvent {
-    #[serde(rename = "firstName")]
-    first_name: String,
-}
-
-#[derive(Serialize)]
-struct CustomOutput {
-    message: String,
-}
+use uuid::Uuid;
 
 fn main() -> () {
     SimpleLogger::new()
@@ -24,18 +10,24 @@ fn main() -> () {
         .init()
         .unwrap();
 
-    lambda!(my_handler);
+    lambda!(router);
 }
 
-fn my_handler(e: CustomEvent, c: Context) -> Result<CustomOutput, HandlerError> {
-    if e.first_name == "" {
-        error!("Empty first name in request {}", c.aws_request_id);
-        bail!("Empty first name");
-    }
+fn router(event: ActorEvent, _: Context) -> Result<GameEvent, HandlerError> {
+    let result = match &event {
+        ActorEvent::SessionInfoRequested { id } => GameEvent::SessionInfoProvided(Session {
+            id: *id,
+            guesses: [None, None, None],
+        }),
+        ActorEvent::GuessSubmitted { id, guess } => GameEvent::GuessEvaluated(Session {
+            id: *id,
+            guesses: [Some(*guess), None, None],
+        }),
+        ActorEvent::SessionRequested => GameEvent::SessionCreated(Session {
+            id: Uuid::new_v4(),
+            guesses: [None, None, None],
+        }),
+    };
 
-    let contents = fs::read_to_string("/cenas").expect("Something went wrong reading the file");
-
-    Ok(CustomOutput {
-        message: format!("Hello, {}! {}!", e.first_name, contents),
-    })
+    Ok(result)
 }

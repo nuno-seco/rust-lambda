@@ -1,4 +1,5 @@
 import os
+import textwrap
 from aws_cdk import (
     core as cdk,
     aws_lambda,
@@ -32,17 +33,53 @@ class InfraStack(cdk.Stack):
                                      rest_api_name="Rust Guessing Game",
                                      description="This fronts the rust lambda guessing game.")
 
-        game_integration = aws_apigateway.LambdaIntegration(handler,
-                                                            proxy=False,
-                                                            integration_responses=[
-                                                                aws_apigateway.IntegrationResponse(
-                                                                    status_code="200"
-                                                                )
-                                                            ],
-                                                            request_templates={"application/json": "{\"firstName\": \"$input.params(\'firstName\')\"}"})
+        sesion_info_request = aws_apigateway.LambdaIntegration(handler,
+                                                               proxy=False,
+                                                               integration_responses=[
+                                                                   aws_apigateway.IntegrationResponse(
+                                                                       status_code="200"
+                                                                   )
+                                                               ],
+                                                               request_templates={
+                                                                   "application/json": textwrap.dedent(
+                                                                       """
+                                                                       {
+                                                                       "eventKind": "sessionInfoRequested",
+                                                                       "id": "$input.params('id')"
+                                                                       }
+                                                                       """)
+                                                               }
+                                                               )
+        games = api.root.add_resource("games")
+        game = games.add_resource("{id}")
 
-        api.root.add_method("GET",
-                            game_integration,
-                            method_responses=[aws_apigateway.MethodResponse(
-                                status_code="200"
-                            )])
+        game.add_method("GET",
+                        sesion_info_request,
+                        method_responses=[aws_apigateway.MethodResponse(
+                            status_code="200"
+                        )])
+
+        add_guess_request = aws_apigateway.LambdaIntegration(handler,
+                                                             proxy=False,
+                                                             integration_responses=[
+                                                                 aws_apigateway.IntegrationResponse(
+                                                                     status_code="200"
+                                                                 )
+                                                             ],
+                                                             request_templates={
+                                                                 "application/json": textwrap.dedent(
+                                                                     """
+                                                                    {
+                                                                    "eventKind": "guessSubmitted",
+                                                                    "guess": $input.json('$.guess'),
+                                                                    "id": "$input.params('id')"
+                                                                    }
+                                                                    """)
+                                                             }
+                                                             )
+
+        game.add_method("POST",
+                        add_guess_request,
+                        method_responses=[aws_apigateway.MethodResponse(
+                            status_code="200"
+                        )])

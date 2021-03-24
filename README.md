@@ -21,3 +21,7 @@ sudo docker run --rm -e DOCKER_LAMBDA_STAY_OPEN=1 -p 9001:9001 -v "$PWD"/target/
 ```
 aws lambda invoke --endpoint http://localhost:9001 --no-sign-request --function-name dummy --payload '{"firstName": "Nuno"}' response.json && cat response.json
 ```
+
+
+We need the CDK in Rust
+Laterst version of lambda runtime does not work!!

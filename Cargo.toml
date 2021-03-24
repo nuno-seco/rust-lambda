@@ -1,7 +1,7 @@
 [package]
-name = "hello_cargo"
+name = "rust_lambda_chapter_2"
 version = "0.1.0"
-authors = ["Nuno Seco <nuno@humla.io>"]
+authors = ["Nuno Seco"]
 edition = "2018"
 autobins = false
 
@@ -16,6 +16,8 @@ serde_derive = "^1"
 log = "^0.4"
 simple_logger = "^1"
 simple-error = "0.2.3"
+uuid = {version = "0.8.2", features = ["serde", "v4"]}
+
 
 [[bin]]
 name = "bootstrap"

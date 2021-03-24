@@ -1,3 +1,4 @@
 {
-    "python.pythonPath": "infra/.venv/bin/python3"
+    "python.pythonPath": "infra/.venv/bin/python3",
+    "rust-analyzer.updates.channel": "nightly"
 }
