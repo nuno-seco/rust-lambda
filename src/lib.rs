@@ -24,6 +24,7 @@ pub mod events {
     pub struct Game {
         pub id: Uuid,
         pub guesses: [Option<u8>; 3],
+        pub number: u8,
     }
 }
 

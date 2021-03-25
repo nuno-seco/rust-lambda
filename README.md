@@ -26,9 +26,11 @@ aws lambda invoke --endpoint http://localhost:9001 --no-sign-request --function-
 We need the CDK in Rust
 Laterst version of lambda runtime does not work!!
 
+export API_SERVER=
+
 POST Guess
-curl -H "Content-Type: application/json" -X POST -d '{"guess": 11}' https://mguaszu790.execute-api.eu-north-1.amazonaws.com/prod/games/58bdd4bd-bcde-4b95-86f5-6b0f637fd480
+curl -H "Content-Type: application/json" -X POST -d '{"guess": 11}' https://"$API_SERVER".execute-api.eu-north-1.amazonaws.com/prod/games/58bdd4bd-bcde-4b95-86f5-6b0f637fd480
 
-curl -H "Accept: application/json" https://mguaszu790.execute-api.eu-north-1.amazonaws.com/prod/games/58bdd4bd-bcde-4b95-86f5-6b0f637fd480
+curl -H "Accept: application/json" https://"$API_SERVER".execute-api.eu-north-1.amazonaws.com/prod/games/58bdd4bd-bcde-4b95-86f5-6b0f637fd480
 
-curl -H "Content-Type: application/json" -X POST https://mguaszu790.execute-api.eu-north-1.amazonaws.com/prod/games/
+curl -H "Content-Type: application/json" -X POST https://"$API_SERVER".execute-api.eu-north-1.amazonaws.com/prod/games/
