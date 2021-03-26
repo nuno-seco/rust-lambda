@@ -58,16 +58,11 @@ class InfraStack(cdk.Stack):
                                                              ),
                                                              aws_apigateway.IntegrationResponse(
                                                                  status_code="404",
-                                                                 selection_pattern=".*Game\sNot\sFound.*"
+                                                                 selection_pattern=self.error_patterns_for_404()
                                                              ),
                                                              aws_apigateway.IntegrationResponse(
                                                                  status_code="400",
-                                                                 selection_pattern=textwrap.dedent(
-                                                                     """.*[
-                                                                     (?:JsonError)|
-                                                                     (?:Game\sAlready\sFinished)|
-                                                                     (?:Game\sInvalid)
-                                                                     ].*""")
+                                                                 selection_pattern=self.error_patterns_for_400()
                                                              )
                                                          ],
                                                          request_templates={
@@ -99,16 +94,11 @@ class InfraStack(cdk.Stack):
                                                           ),
                                                           aws_apigateway.IntegrationResponse(
                                                               status_code="404",
-                                                              selection_pattern=".*Game\sNot\sFound.*"
+                                                              selection_pattern=self.error_patterns_for_404()
                                                           ),
                                                           aws_apigateway.IntegrationResponse(
                                                               status_code="400",
-                                                              selection_pattern=textwrap.dedent(
-                                                                  """.*[
-                                                                     (?:JsonError)|
-                                                                     (?:Game\sAlready\sFinished)|
-                                                                     (?:Game\sInvalid)
-                                                                     ].*""")
+                                                              selection_pattern=self.error_patterns_for_400()
                                                           )
                                                       ],
                                                       request_templates={
@@ -155,6 +145,12 @@ class InfraStack(cdk.Stack):
                          create_game,
                          method_responses=[
                              aws_apigateway.MethodResponse(status_code="200")])
+
+    def error_patterns_for_404(self):
+        return ".*Game\sNot\sFound.*"
+
+    def error_patterns_for_400(self):
+        return ".*(?:JsonError|Game\sAlready\sFinished|Game\sInvalid).*"
 
     def response_template(self):
         return textwrap.dedent(
