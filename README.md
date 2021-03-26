@@ -19,7 +19,7 @@ sudo docker run --rm -e DOCKER_LAMBDA_STAY_OPEN=1 -p 9001:9001 -v "$PWD"/target/
 
 ### Send request Locally
 ```
-aws lambda invoke --endpoint http://localhost:9001 --no-sign-request --function-name dummy --payload '{"firstName": "Nuno"}' response.json && cat response.json
+aws lambda invoke --endpoint http://localhost:9001 --no-sign-request --function-name dummy --payload '{"kind": "gameRequested"}' response.json && cat response.json
 ```
 
 

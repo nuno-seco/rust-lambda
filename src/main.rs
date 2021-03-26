@@ -1,8 +1,7 @@
-use lambda_runtime::{error::HandlerError, lambda, Context};
+use lambda_runtime::{error::HandlerError, lambda};
 use log::{self, LevelFilter};
-use rust_lambda_chapter_2::events::{ActorEvent, Game, GameEvent};
+use rust_lambda_chapter_2::engine::{events::GameEvent, Engine};
 use simple_logger::SimpleLogger;
-use uuid::Uuid;
 
 fn main() -> () {
     SimpleLogger::new()
@@ -10,28 +9,14 @@ fn main() -> () {
         .init()
         .unwrap();
 
-    lambda!(router);
-    // lambda!(|event, context| { router(event, context) })
-}
+    let mut engine = Engine::new();
+    lambda!(|event, _| -> Result<GameEvent, HandlerError> {
+        log::info!("Received event : {:?}", event);
+        let generated = engine
+            .process(event)
+            .map_err(|game_error| game_error.to_string().as_str().into());
+        log::info!("Generating : {:?}", generated);
 
-fn router(event: ActorEvent, _: Context) -> Result<GameEvent, HandlerError> {
-    let result = match &event {
-        ActorEvent::GameInfoRequested { id } => GameEvent::GameInfoProvided(Game {
-            number: 47,
-            id: *id,
-            guesses: [None, None, None],
-        }),
-        ActorEvent::GuessSubmitted { id, guess } => GameEvent::GuessEvaluated(Game {
-            number: 47,
-            id: *id,
-            guesses: [Some(*guess), None, None],
-        }),
-        ActorEvent::GameRequested => GameEvent::GameCreated(Game {
-            number: 47,
-            id: Uuid::new_v4(),
-            guesses: [None, None, None],
-        }),
-    };
-
-    Ok(result)
+        generated
+    })
 }

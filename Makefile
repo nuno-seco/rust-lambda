@@ -1,4 +1,4 @@
-.PHONY: cargo_build docker_build cdk_deploy cdk_destroy
+.PHONY: cargo_build docker_build lambda_local_run cdk_deploy cdk_destroy
 
 SHELL := /usr/bin/env bash
 
@@ -9,7 +9,7 @@ cargo_build:
 docker_build: cargo_build
 	cd docker && docker build -t rust_lambda .
 
-docker_run: cargo_build
+lambda_local_run: cargo_build
 	docker run --rm -e DOCKER_LAMBDA_STAY_OPEN=1 -p 9001:9001 -v $(PWD)/docker/bootstrap:/var/task/bootstrap:ro,delegated lambci/lambda:provided main
 
 cdk_deploy: cargo_build

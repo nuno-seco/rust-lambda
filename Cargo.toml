@@ -17,7 +17,7 @@ log = "^0.4"
 simple_logger = "^1"
 simple-error = "0.2.3"
 uuid = {version = "0.8.2", features = ["serde", "v4"]}
-
+rand = "0.8.3"
 
 [[bin]]
 name = "bootstrap"

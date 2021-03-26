@@ -55,6 +55,19 @@ class InfraStack(cdk.Stack):
                                                                  response_templates={
                                                                      "application/json": self.response_template()
                                                                  }
+                                                             ),
+                                                             aws_apigateway.IntegrationResponse(
+                                                                 status_code="404",
+                                                                 selection_pattern=".*Game\sNot\sFound.*"
+                                                             ),
+                                                             aws_apigateway.IntegrationResponse(
+                                                                 status_code="400",
+                                                                 selection_pattern=textwrap.dedent(
+                                                                     """.*[
+                                                                     (?:JsonError)|
+                                                                     (?:Game\sAlready\sFinished)|
+                                                                     (?:Game\sInvalid)
+                                                                     ].*""")
                                                              )
                                                          ],
                                                          request_templates={
@@ -70,10 +83,10 @@ class InfraStack(cdk.Stack):
 
         game.add_method("GET",
                         get_game_info,
-                        method_responses=[aws_apigateway.MethodResponse(
-                            status_code="200"
-                        )]
-                        )
+                        method_responses=[
+                            aws_apigateway.MethodResponse(status_code="200"),
+                            aws_apigateway.MethodResponse(status_code="404"),
+                            aws_apigateway.MethodResponse(status_code="400")])
 
         make_guess = aws_apigateway.LambdaIntegration(handler,
                                                       proxy=False,
@@ -83,6 +96,19 @@ class InfraStack(cdk.Stack):
                                                               response_templates={
                                                                   "application/json": self.response_template()
                                                               }
+                                                          ),
+                                                          aws_apigateway.IntegrationResponse(
+                                                              status_code="404",
+                                                              selection_pattern=".*Game\sNot\sFound.*"
+                                                          ),
+                                                          aws_apigateway.IntegrationResponse(
+                                                              status_code="400",
+                                                              selection_pattern=textwrap.dedent(
+                                                                  """.*[
+                                                                     (?:JsonError)|
+                                                                     (?:Game\sAlready\sFinished)|
+                                                                     (?:Game\sInvalid)
+                                                                     ].*""")
                                                           )
                                                       ],
                                                       request_templates={
@@ -99,9 +125,10 @@ class InfraStack(cdk.Stack):
 
         game.add_method("POST",
                         make_guess,
-                        method_responses=[aws_apigateway.MethodResponse(
-                            status_code="200"
-                        )])
+                        method_responses=[
+                            aws_apigateway.MethodResponse(status_code="200"),
+                            aws_apigateway.MethodResponse(status_code="404"),
+                            aws_apigateway.MethodResponse(status_code="400")])
 
     def create_or_update_games_methods(self, handler, games):
         create_game = aws_apigateway.LambdaIntegration(handler,
@@ -126,9 +153,8 @@ class InfraStack(cdk.Stack):
 
         games.add_method("POST",
                          create_game,
-                         method_responses=[aws_apigateway.MethodResponse(
-                             status_code="200"
-                         )])
+                         method_responses=[
+                             aws_apigateway.MethodResponse(status_code="200")])
 
     def response_template(self):
         return textwrap.dedent(
