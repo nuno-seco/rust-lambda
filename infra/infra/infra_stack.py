@@ -41,8 +41,7 @@ class InfraStack(cdk.Stack):
 
     def create_or_update_ecr_image(self):
         return aws_lambda.EcrImageCode.from_asset_image(
-            directory=os.path.join(os.getcwd(), "../docker"),
-            repository_name="rust_lambda")
+            directory=os.path.join(os.getcwd(), "../docker"))
 
     def create_or_update_game_methods(self, handler, game):
         get_game_info = aws_apigateway.LambdaIntegration(handler,
@@ -184,7 +183,7 @@ class InfraStack(cdk.Stack):
                             "guess": 
                              {
                                "type": "integer",
-                               "minimum": 0,
+                               "minimum": 1,
                                "maximum": 10
                              }
                          }   

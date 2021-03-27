@@ -10,13 +10,13 @@ fn main() -> () {
         .unwrap();
 
     let mut engine = Engine::new();
-    lambda!(|event, _| -> Result<GameEvent, HandlerError> {
-        log::info!("Received event : {:?}", event);
-        let generated = engine
-            .process(event)
+    lambda!(|actor_event, _| -> Result<GameEvent, HandlerError> {
+        log::info!("Received event : {:?}", actor_event);
+        let game_event = engine
+            .process(actor_event)
             .map_err(|game_error| game_error.to_string().as_str().into());
-        log::info!("Generating : {:?}", generated);
+        log::info!("Generating : {:?}", game_event);
 
-        generated
+        game_event
     })
 }

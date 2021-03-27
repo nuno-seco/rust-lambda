@@ -9,7 +9,7 @@ pub const NUMBER_OF_GUESSES: usize = 3;
 pub struct Game {
     pub id: Uuid,
     pub guesses: [Option<u8>; 3],
-    pub number: u8,
+    pub random_number: u8,
     pub status: GameStatus,
 }
 #[derive(Serialize, Debug, PartialEq, Clone)]
@@ -27,7 +27,7 @@ impl Game {
         Game {
             guesses,
             id,
-            number,
+            random_number: number,
             status: GameStatus::Ongoing,
         }
     }

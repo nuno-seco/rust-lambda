@@ -1,6 +1,9 @@
-.PHONY: cargo_build docker_build lambda_local_run cdk_deploy cdk_destroy
+.PHONY: cargo_test cargo_build docker_build lambda_local_run cdk_deploy cdk_destroy
 
 SHELL := /usr/bin/env bash
+
+cargo_test:
+	cargo test
 
 cargo_build:
 	cargo build --release --target x86_64-unknown-linux-musl
