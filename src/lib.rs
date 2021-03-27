@@ -1,4 +1,5 @@
 pub mod engine {
+
     pub mod errors;
     pub mod events;
     mod game;
@@ -6,22 +7,23 @@ pub mod engine {
     use self::{
         errors::{GameError, GameError::GameNotFound},
         events::{ActorEvent, GameEvent},
-        game::Game,
+        game::{Game, GameStatus},
     };
+    use game::NUMBER_OF_GUESSES;
     use rand::{prelude::ThreadRng, Rng};
 
     use std::collections::HashMap;
     use uuid::Uuid;
 
     pub struct Engine {
-        data_store: HashMap<Uuid, Game>,
+        game_repo: HashMap<Uuid, Game>,
         rand_generator: ThreadRng,
     }
 
     impl Engine {
         pub fn new() -> Self {
             Engine {
-                data_store: HashMap::new(),
+                game_repo: HashMap::new(),
                 rand_generator: rand::thread_rng(),
             }
         }
@@ -34,6 +36,11 @@ pub mod engine {
             }
         }
 
+        fn get_info(&mut self, id: &Uuid) -> Result<GameEvent, GameError> {
+            self.get_game(id)
+                .map(|g| GameEvent::GameInfoProvided(g.clone()))
+        }
+
         fn create_game(&mut self) -> Result<GameEvent, GameError> {
             let game = Game::new(
                 Uuid::new_v4(),
@@ -41,63 +48,69 @@ pub mod engine {
                 [None, None, None],
             );
 
-            self.data_store.insert(game.id, game.clone());
+            let event = GameEvent::GameCreated(game.clone());
+            self.insert_game(game);
 
-            Ok(GameEvent::GameCreated(game))
+            Ok(event)
         }
 
         fn submit_guess(&mut self, id: &Uuid, guess: &u8) -> Result<GameEvent, GameError> {
-            let new_guess_list = self.new_guess_list(id, guess)?;
+            let current_game = self.get_game(id)?;
+            let new_guess_list = new_guess_list(current_game.guesses, guess)?;
+            let new_status = new_status(new_guess_list, current_game.number);
+            let new_game_state = self.update_game(id, new_guess_list, new_status.clone())?;
 
-            let new_game_state = self.persist(id, new_guess_list);
-
-            match new_game_state {
-                Game {
-                    guesses, number, ..
-                } if guesses.contains(&Some(*number)) => {
-                    Ok(GameEvent::GameWon(new_game_state.clone()))
-                }
-                Game {
-                    guesses: [Some(_), Some(_), Some(_)],
-                    ..
-                } => Ok(GameEvent::GameLost(new_game_state.clone())),
-                _ => Ok(GameEvent::GuessEvaluated(new_game_state.clone())),
+            match new_status {
+                GameStatus::Lost => Ok(GameEvent::GameLost(new_game_state.clone())),
+                GameStatus::Ongoing => Ok(GameEvent::GuessEvaluated(new_game_state.clone())),
+                GameStatus::Won => Ok(GameEvent::GameWon(new_game_state.clone())),
             }
         }
 
-        fn persist(&mut self, id: &Uuid, new_state: [Option<u8>; 3]) -> &Game {
-            self.data_store
-                .entry(*id)
-                .and_modify(|game| game.guesses = new_state);
-
-            self.data_store.get(id).unwrap()
+        fn insert_game(&mut self, game: Game) -> () {
+            self.game_repo.insert(game.id, game);
         }
 
-        fn new_guess_list(&mut self, id: &Uuid, guess: &u8) -> Result<[Option<u8>; 3], GameError> {
-            fn next_state(game: &Game, guess: u8) -> Result<[Option<u8>; 3], GameError> {
-                match game.guesses {
-                    [None, None, None] => Ok([Some(guess), None, None]),
-                    [a @ Some(_), None, None] => Ok([a, Some(guess), None]),
-                    [a @ Some(_), b @ Some(_), None] => Ok([a, b, Some(guess)]),
-                    [Some(_), Some(_), Some(_)] => Err(GameError::GameFinished),
-                    _ => Err(GameError::GameInvalid),
-                }
-            }
+        fn update_game(
+            &mut self,
+            id: &Uuid,
+            new_state: [Option<u8>; NUMBER_OF_GUESSES],
+            new_status: GameStatus,
+        ) -> Result<&Game, GameError> {
+            self.game_repo.entry(*id).and_modify(|game| {
+                game.guesses = new_state;
+                game.status = new_status
+            });
 
-            let new_state = self
-                .data_store
-                .get(id)
-                .ok_or_else(|| GameNotFound)
-                .and_then(|g| next_state(g, *guess))?;
-
-            Ok(new_state)
+            self.get_game(id)
         }
 
-        fn get_info(&mut self, id: &Uuid) -> Result<GameEvent, GameError> {
-            self.data_store
-                .get(id)
-                .ok_or_else(|| GameNotFound)
-                .map(|g| GameEvent::GameInfoProvided(g.clone()))
+        fn get_game(&self, id: &Uuid) -> Result<&Game, GameError> {
+            self.game_repo.get(id).ok_or_else(|| GameNotFound)
+        }
+    }
+
+    fn new_status(
+        new_guess_list: [Option<u8>; NUMBER_OF_GUESSES],
+        selected_number: u8,
+    ) -> GameStatus {
+        match new_guess_list {
+            guesses if guesses.contains(&Some(selected_number)) => GameStatus::Won,
+            [Some(_), Some(_), Some(_)] => GameStatus::Lost,
+            _ => GameStatus::Ongoing,
+        }
+    }
+
+    fn new_guess_list(
+        current_guesses: [Option<u8>; NUMBER_OF_GUESSES],
+        guess: &u8,
+    ) -> Result<[Option<u8>; NUMBER_OF_GUESSES], GameError> {
+        match current_guesses {
+            [None, None, None] => Ok([Some(*guess), None, None]),
+            [a @ Some(_), None, None] => Ok([a, Some(*guess), None]),
+            [a @ Some(_), b @ Some(_), None] => Ok([a, b, Some(*guess)]),
+            [Some(_), Some(_), Some(_)] => Err(GameError::GameFinished),
+            _ => Err(GameError::GameInvalid),
         }
     }
 }

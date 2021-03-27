@@ -25,7 +25,6 @@ class InfraStack(cdk.Stack):
         return aws_apigateway.RestApi(self, "guessing_game",
                                       rest_api_name="Rust Guessing Game",
                                       description="This fronts the rust lambda guessing game.")
-        return api
 
     def create_or_update_lambda_function(self, ecr_image):
         return aws_lambda.Function(self,
@@ -39,7 +38,6 @@ class InfraStack(cdk.Stack):
                                    reserved_concurrent_executions=10,
                                    timeout=cdk.Duration.seconds(1),
                                    )
-        return handler
 
     def create_or_update_ecr_image(self):
         return aws_lambda.EcrImageCode.from_asset_image(
@@ -159,11 +157,13 @@ class InfraStack(cdk.Stack):
             #set($path = $context.resourcePath.replaceAll("/\{[a-z]*\}", ""))
             #set($id = $input.json('$.id').replaceAll("^.|.$", ""))
             #set($guesses = $input.json('$.guesses'))
+            #set($status = $input.json('$.status'))
             {
               "game":
                {
                  "id" : "${id}",
-                 "guesses" : ${guesses}
+                 "guesses" : ${guesses},
+                 "status" : ${status}
                },
               "links":
                {                                                                            
