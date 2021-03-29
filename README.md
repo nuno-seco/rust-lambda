@@ -9,15 +9,12 @@ In particular, other than rust programming per se, the project also explores:
 - running and testing a lammbda function locally by running it in a docker container
 - with the new billing unit for [AWS Lambda at 1ms](https://aws.amazon.com/blogs/aws/new-for-aws-lambda-1ms-billing-granularity-adds-cost-savings/) it begs one to consider lowering the latency as much as possible when dealing with high volume systems. How far can Rust take us? And what is the tradeoff with developer productivity?
 
-## Disclaimer
-Nothing in this repo should be considered a reference as it is just one persons attempt in exploring tech using happy path programming.   
-
 ## Caveats
-The [Rust Lambda Runtime](https://github.com/awslabs/aws-lambda-rust-runtime) used in the project is not the most recent as that version caused the lambda function to hang in certain situations. 
+The [Rust Lambda Runtime](https://github.com/awslabs/aws-lambda-rust-runtime) used in the project is not the most recent as that version caused the lambda function to hang in certain situations. The version used, and as far as I could understand, has no good way of transforming custom `Error` types to the types the library requires which lead to some ugly code in the main function. 
 
-The state of the lambda is kept in a in-memory HashMap, hence when the lambda function is disposed so is all the state of your ongoing games. Likewise, if several Lambdas are spawned you wont be able to control where requests are routed and you'll experience "split brain" like scenario. Phantom reads are also quite likely if there is high concurrency on the same game. Depending on your view point this could actually make the game more exciting.... A following iteration will include persistent storage most likely using [DynamoDB](https://aws.amazon.com/dynamodb/). 
+The state of the lambda is kept in a in-memory HashMap, hence when the lambda function is disposed so is all the state of your ongoing games. Likewise, if several Lambdas are spawned you won't be able to control where requests are routed and you'll experience "split brain" like scenario. Phantom reads are also quite likely if there is high concurrency on the same game. Depending on your view point this could actually make the game more exciting.... A following iteration will include persistent storage most likely using [DynamoDB](https://aws.amazon.com/dynamodb/). 
 
-Tests are scarce and require furher knowledge of the existing mocking frameworks and best practices.
+Tests are scarce and require furher knowledge of the existing Rust mocking frameworks and best practices.
 
 In this project it is assumed that the rust binary produced is statically linked to [Musl](https://www.musl-libc.org/) hence producing a standalone binary. After adding the `x86_64-unknown-linux-musl` target to the Rust toolchain `Cargo` failed to find  the linker to the `Musl` target in question. The solution to make it work was to create a symbolic link using `sudo ln -s musl-gcc x86_64-linux-musl-gcc` in the `usr/bin` dir (note that this was on a Ubuntu Linux machine with [musl](https://packages.ubuntu.com/search?keywords=musl))
 
@@ -97,6 +94,8 @@ which will return the current state of the game:
 The `Makefile` also includes a target that will deploy to your AWS account, in this case use `make cdk_deploy`.
 If your CDK is configured correctly you will be prompted to proceed with creating a Cloudformation Stack called `InfraStack`. 
 The stack will comprise an [API Gateway](https://aws.amazon.com/api-gateway/) instance, an [AWS ECR](https://aws.amazon.com/ecr/) where the docker image will be uploaded to and a [Lambda function](https://aws.amazon.com/lambda/) that will instantiate the docker image.
+
+Everytime you change something in the code or with the AWS infrastructure you can run `make cdk_deploy` and your stack will be updated with the new version.
 
 ### Test the REST like API
 Assuming the deployment was successful you should now be able to shoot `curl` requests at the API.
@@ -244,7 +243,11 @@ For example submitting a new guess to a game that is finished (either `won` or `
 > NOTE: The error message is pretty screwed up with `UnknownError` being shown multiple times. I believe this is  a bug in the version of the lambda runtime being used. The newer version handles errors differently and uses different crates hopefully making error handling easier.  
 
 
-# References
+## Disclaimer
+Nothing in this repo should be considered a reference as it is just one persons attempt in exploring tech using happy path programming.   
+
+
+# Other References
 - https://aws.amazon.com/blogs/opensource/rust-runtime-for-aws-lambda/
 - https://hub.docker.com/r/lambci/lambda
 - https://adevait.com/rust/deploying-rust-functions-on-aws-lambda
